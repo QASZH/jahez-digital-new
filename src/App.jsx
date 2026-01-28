@@ -3,56 +3,123 @@ import { useMemo, useState } from "react";
 const PRODUCTS = [
   {
     id: "cv-pack",
-    title: "حزمة قوالب سيرة ذاتية",
+    title_ar: "حزمة قوالب سيرة ذاتية",
+    title_en: "CV Templates Bundle",
     price: 29,
-    category: "قوالب",
-    desc: "قوالب جاهزة + نسخ قابلة للتعديل.",
+    category_ar: "قوالب",
+    category_en: "Templates",
+    desc_ar: "قوالب جاهزة + نسخ قابلة للتعديل.",
+    desc_en: "Ready-to-use templates + editable versions.",
   },
   {
     id: "social-bundle",
-    title: "حزمة تصاميم سوشال",
+    title_ar: "حزمة تصاميم سوشال",
+    title_en: "Social Design Bundle",
     price: 49,
-    category: "تصاميم",
-    desc: "بوستات وستوري قابلة للتخصيص.",
+    category_ar: "تصاميم",
+    category_en: "Designs",
+    desc_ar: "بوستات وستوري قابلة للتخصيص.",
+    desc_en: "Customizable posts & stories.",
   },
   {
     id: "toolkit",
-    title: "عدة أدوات رقمية",
+    title_ar: "عدة أدوات رقمية",
+    title_en: "Digital Toolkit",
     price: 39,
-    category: "أدوات",
-    desc: "ملفات مساعدة وإعدادات جاهزة.",
+    category_ar: "أدوات",
+    category_en: "Tools",
+    desc_ar: "ملفات مساعدة وإعدادات جاهزة.",
+    desc_en: "Helpful files and ready configurations.",
   },
 ];
 
 function formatSAR(amount) {
-  return new Intl.NumberFormat("ar-SA", {
+  return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "SAR",
     maximumFractionDigits: 0,
   }).format(amount);
 }
 
+const I18N = {
+  ar: {
+    dir: "rtl",
+    brand: "Jahez Digital",
+    title: "متجر المنتجات الرقمية",
+    subtitle: "نسخة تجريبية: منتجات + سلة (بدون دفع الآن)",
+    search: "ابحث عن منتج…",
+    all: "الكل",
+    cart: "السلة",
+    items: "عنصر",
+    checkout: "متابعة الشراء",
+    checkoutSoon: "قريبًا: الدفع + تسليم تلقائي للملفات الرقمية",
+    details: "تفاصيل",
+    detailsSoon: "قريبًا: صفحة المنتج + المعاينة",
+    add: "إضافة للسلة",
+    cartContent: "محتويات السلة",
+    emptyCart: "السلة فاضية… لا تخليها كذا 😄",
+    remove: "حذف",
+    demo: "نسخة تجريبية",
+  },
+  en: {
+    dir: "ltr",
+    brand: "Jahez Digital",
+    title: "Digital Products Store",
+    subtitle: "Demo: Products + Cart (no payments yet)",
+    search: "Search for a product…",
+    all: "All",
+    cart: "Cart",
+    items: "items",
+    checkout: "Checkout",
+    checkoutSoon: "Coming soon: payments + automatic file delivery",
+    details: "Details",
+    detailsSoon: "Coming soon: product page + preview",
+    add: "Add to cart",
+    cartContent: "Cart items",
+    emptyCart: "Cart is empty… add something 😄",
+    remove: "Remove",
+    demo: "Demo",
+  },
+};
+
 export default function App() {
+  const [lang, setLang] = useState("ar"); // "ar" | "en"
+  const t = I18N[lang];
+
   const [query, setQuery] = useState("");
-  const [category, setCategory] = useState("الكل");
+  const [category, setCategory] = useState(t.all);
   const [cart, setCart] = useState([]);
 
+  // categories depend on language
   const categories = useMemo(() => {
-    const set = new Set(PRODUCTS.map((p) => p.category));
-    return ["الكل", ...Array.from(set)];
-  }, []);
+    const key = lang === "ar" ? "category_ar" : "category_en";
+    const set = new Set(PRODUCTS.map((p) => p[key]));
+    return [I18N[lang].all, ...Array.from(set)];
+  }, [lang]);
+
+  // when language changes, reset category to "All"
+  useMemo(() => {
+    setCategory(I18N[lang].all);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lang]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
+    const titleKey = lang === "ar" ? "title_ar" : "title_en";
+    const descKey = lang === "ar" ? "desc_ar" : "desc_en";
+    const catKey = lang === "ar" ? "category_ar" : "category_en";
+
     return PRODUCTS.filter((p) => {
       const matchQ =
         !q ||
-        p.title.toLowerCase().includes(q) ||
-        p.desc.toLowerCase().includes(q);
-      const matchC = category === "الكل" || p.category === category;
+        String(p[titleKey]).toLowerCase().includes(q) ||
+        String(p[descKey]).toLowerCase().includes(q);
+
+      const matchC = category === I18N[lang].all || p[catKey] === category;
+
       return matchQ && matchC;
     });
-  }, [query, category]);
+  }, [query, category, lang]);
 
   const total = useMemo(
     () => cart.reduce((sum, item) => sum + item.price, 0),
@@ -67,9 +134,33 @@ export default function App() {
     setCart((prev) => prev.filter((_, i) => i !== index));
   }
 
+  const titleKey = lang === "ar" ? "title_ar" : "title_en";
+  const descKey = lang === "ar" ? "desc_ar" : "desc_en";
+  const catKey = lang === "ar" ? "category_ar" : "category_en";
+
   return (
-    <div style={{ minHeight: "100vh", background: "#0b0f19", color: "#fff" }}>
+    <div dir={t.dir} style={{ minHeight: "100vh", background: "#0b0f19", color: "#fff" }}>
       <div style={{ maxWidth: 1100, margin: "0 auto", padding: "28px 18px" }}>
+        {/* Top bar */}
+        <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+          <div style={{ opacity: 0.75, fontSize: 12 }}>{t.demo}</div>
+
+          <button
+            onClick={() => setLang((p) => (p === "ar" ? "en" : "ar"))}
+            style={{
+              padding: "8px 10px",
+              borderRadius: 12,
+              border: "1px solid rgba(255,255,255,0.18)",
+              background: "rgba(255,255,255,0.06)",
+              color: "#fff",
+              cursor: "pointer",
+              fontWeight: 700,
+            }}
+          >
+            {lang === "ar" ? "English" : "العربية"}
+          </button>
+        </div>
+
         {/* Header */}
         <div
           style={{
@@ -78,18 +169,16 @@ export default function App() {
             gap: 12,
             justifyContent: "space-between",
             flexWrap: "wrap",
+            marginTop: 10,
           }}
         >
           <div>
-            <div style={{ fontSize: 12, opacity: 0.8 }}>Jahez Digital</div>
-            <h1 style={{ margin: "6px 0 0", fontSize: 28 }}>
-              متجر المنتجات الرقمية
-            </h1>
-            <div style={{ marginTop: 6, opacity: 0.85 }}>
-              نسخة تجريبية: منتجات + سلة (بدون دفع الآن)
-            </div>
+            <div style={{ fontSize: 12, opacity: 0.8 }}>{t.brand}</div>
+            <h1 style={{ margin: "6px 0 0", fontSize: 28 }}>{t.title}</h1>
+            <div style={{ marginTop: 6, opacity: 0.85 }}>{t.subtitle}</div>
           </div>
 
+          {/* Cart box */}
           <div
             style={{
               padding: 12,
@@ -100,16 +189,14 @@ export default function App() {
             }}
           >
             <div style={{ display: "flex", justifyContent: "space-between" }}>
-              <span style={{ opacity: 0.85 }}>السلة</span>
-              <span style={{ opacity: 0.85 }}>{cart.length} عنصر</span>
+              <span style={{ opacity: 0.85 }}>{t.cart}</span>
+              <span style={{ opacity: 0.85 }}>
+                {cart.length} {t.items}
+              </span>
             </div>
-            <div style={{ marginTop: 8, fontSize: 18, fontWeight: 700 }}>
-              {formatSAR(total)}
-            </div>
+            <div style={{ marginTop: 8, fontSize: 18, fontWeight: 700 }}>{formatSAR(total)}</div>
             <button
-              onClick={() =>
-                alert("قريبًا: الدفع + تسليم تلقائي للملفات الرقمية")
-              }
+              onClick={() => alert(t.checkoutSoon)}
               style={{
                 marginTop: 10,
                 width: "100%",
@@ -118,27 +205,20 @@ export default function App() {
                 border: "0",
                 cursor: "pointer",
                 background: "#6ee7ff",
-                fontWeight: 700,
+                fontWeight: 800,
               }}
             >
-              متابعة الشراء
+              {t.checkout}
             </button>
           </div>
         </div>
 
         {/* Filters */}
-        <div
-          style={{
-            marginTop: 18,
-            display: "flex",
-            gap: 10,
-            flexWrap: "wrap",
-          }}
-        >
+        <div style={{ marginTop: 18, display: "flex", gap: 10, flexWrap: "wrap" }}>
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="ابحث عن منتج…"
+            placeholder={t.search}
             style={{
               flex: "1 1 260px",
               padding: "12px 14px",
@@ -149,6 +229,7 @@ export default function App() {
               outline: "none",
             }}
           />
+
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
@@ -170,7 +251,7 @@ export default function App() {
           </select>
         </div>
 
-        {/* Grid */}
+        {/* Products */}
         <div
           style={{
             marginTop: 18,
@@ -189,29 +270,15 @@ export default function App() {
                 border: "1px solid rgba(255,255,255,0.12)",
               }}
             >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  gap: 10,
-                }}
-              >
+              <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
                 <div>
-                  <div style={{ fontSize: 12, opacity: 0.75 }}>
-                    {p.category}
-                  </div>
-                  <div style={{ marginTop: 6, fontSize: 18, fontWeight: 800 }}>
-                    {p.title}
-                  </div>
+                  <div style={{ fontSize: 12, opacity: 0.75 }}>{p[catKey]}</div>
+                  <div style={{ marginTop: 6, fontSize: 18, fontWeight: 800 }}>{p[titleKey]}</div>
                 </div>
-                <div style={{ fontWeight: 800, fontSize: 16 }}>
-                  {formatSAR(p.price)}
-                </div>
+                <div style={{ fontWeight: 800, fontSize: 16 }}>{formatSAR(p.price)}</div>
               </div>
 
-              <div style={{ marginTop: 10, opacity: 0.85, lineHeight: 1.5 }}>
-                {p.desc}
-              </div>
+              <div style={{ marginTop: 10, opacity: 0.85, lineHeight: 1.5 }}>{p[descKey]}</div>
 
               <div style={{ marginTop: 14, display: "flex", gap: 10 }}>
                 <button
@@ -226,10 +293,11 @@ export default function App() {
                     fontWeight: 800,
                   }}
                 >
-                  إضافة للسلة
+                  {t.add}
                 </button>
+
                 <button
-                  onClick={() => alert("قريبًا: صفحة المنتج + المعاينة")}
+                  onClick={() => alert(t.detailsSoon)}
                   style={{
                     padding: "10px 12px",
                     borderRadius: 12,
@@ -240,7 +308,7 @@ export default function App() {
                     fontWeight: 700,
                   }}
                 >
-                  تفاصيل
+                  {t.details}
                 </button>
               </div>
             </div>
@@ -249,12 +317,10 @@ export default function App() {
 
         {/* Cart list */}
         <div style={{ marginTop: 18 }}>
-          <h2 style={{ fontSize: 18, marginBottom: 10 }}>محتويات السلة</h2>
+          <h2 style={{ fontSize: 18, marginBottom: 10 }}>{t.cartContent}</h2>
 
           {cart.length === 0 ? (
-            <div style={{ opacity: 0.8 }}>
-              السلة فاضية… لا تخليها كذا 😄
-            </div>
+            <div style={{ opacity: 0.8 }}>{t.emptyCart}</div>
           ) : (
             <div
               style={{
@@ -272,16 +338,14 @@ export default function App() {
                     alignItems: "center",
                     padding: 12,
                     background: "rgba(255,255,255,0.06)",
-                    borderTop:
-                      idx === 0 ? "none" : "1px solid rgba(255,255,255,0.10)",
+                    borderTop: idx === 0 ? "none" : "1px solid rgba(255,255,255,0.10)",
                   }}
                 >
                   <div>
-                    <div style={{ fontWeight: 800 }}>{item.title}</div>
-                    <div style={{ opacity: 0.75, fontSize: 12 }}>
-                      {item.category}
-                    </div>
+                    <div style={{ fontWeight: 800 }}>{item[titleKey]}</div>
+                    <div style={{ opacity: 0.75, fontSize: 12 }}>{item[catKey]}</div>
                   </div>
+
                   <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
                     <div style={{ fontWeight: 800 }}>{formatSAR(item.price)}</div>
                     <button
@@ -295,7 +359,7 @@ export default function App() {
                         cursor: "pointer",
                       }}
                     >
-                      حذف
+                      {t.remove}
                     </button>
                   </div>
                 </div>
@@ -305,7 +369,7 @@ export default function App() {
         </div>
 
         <div style={{ marginTop: 22, opacity: 0.65, fontSize: 12 }}>
-          © {new Date().getFullYear()} Jahez Digital — نسخة تجريبية
+          © {new Date().getFullYear()} {t.brand}
         </div>
       </div>
     </div>
